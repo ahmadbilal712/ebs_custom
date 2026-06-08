@@ -4,7 +4,6 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate
 
 
 class BranchAttendanceApproval(Document):
@@ -41,6 +40,3 @@ class BranchAttendanceApproval(Document):
 					manager_branch
 				)
 			)
-
-	def on_update_after_submit(self):
-		pass

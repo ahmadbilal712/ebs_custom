@@ -45,12 +45,15 @@ cd ~/frappe-bench
 
 ```bash
 cd ~/frappe-bench
+./env/bin/pip install openpyxl
+bench --site biometric.metadaftr.com install-app ebs_custom
 bench --site biometric.metadaftr.com migrate
-bench --site biometric.metadaftr.com sync-fixtures
 bench build --app ebs_custom
 bench --site biometric.metadaftr.com clear-cache
 bench restart
 ```
+
+> Note: `sync-fixtures` is not a bench command on v16. Fixtures sync automatically during `install-app` and `migrate`.
 
 If site name is different:
 
@@ -114,11 +117,28 @@ On staff **Employee** → **Reports To** = Branch Manager employee.
 2. Open **Branch Attendance Approval Workflow**
 3. **Is Active** = checked
 
-If missing, run again:
+If missing, run migrate again (workflow is created automatically):
 
 ```bash
-bench --site biometric.metadaftr.com sync-fixtures
+bench --site biometric.metadaftr.com migrate
+bench restart
 ```
+
+### Step B8 — Verify (server console)
+
+```bash
+bench --site biometric.metadaftr.com console
+```
+
+```python
+import frappe
+print("App installed:", "ebs_custom" in frappe.get_installed_apps())
+print("DocType:", frappe.db.exists("DocType", "Branch Attendance Approval"))
+print("Workflow:", frappe.db.exists("Workflow", "Branch Attendance Approval Workflow"))
+exit()
+```
+
+All three should be `True`.
 
 ---
 

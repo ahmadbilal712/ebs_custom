@@ -60,7 +60,7 @@ fixtures = [
 
 # include js in doctype views
 doctype_js = {
-	"Branch Attendance Approval": "attendance/doctype/branch_attendance_approval/branch_attendance_approval.js",
+	"Branch Attendance Approval": "ebs_custom/doctype/branch_attendance_approval/branch_attendance_approval.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -106,6 +106,7 @@ doctype_js = {
 # before_install = "ebs_custom.install.before_install"
 # after_install = "ebs_custom.install.after_install"
 after_install = "ebs_custom.customizations.fields_setup.execute"
+after_migrate = "ebs_custom.setup.after_migrate"
 before_uninstall = "ebs_custom.customizations.fields_setup.remove_custom_fields"
 # Uninstallation
 # ------------
