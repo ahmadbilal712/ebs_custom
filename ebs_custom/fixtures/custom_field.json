@@ -57,5 +57,17 @@
   "translatable": 0,
   "unique": 0,
   "width": null
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Employee Checkin",
+  "fieldname": "approval_status",
+  "fieldtype": "Select",
+  "insert_after": "log_type",
+  "label": "Approval Status",
+  "options": "Pending\nApproved\nRejected",
+  "default": "Pending",
+  "module": "Ebs Custom",
+  "name": "Employee Checkin-approval_status"
  }
 ]

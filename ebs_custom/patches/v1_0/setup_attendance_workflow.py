@@ -2,8 +2,16 @@ import frappe
 
 
 def execute():
+	if not frappe.db.exists("DocType", "Branch Attendance Approval"):
+		return
+
 	if frappe.db.exists("Workflow", "Branch Attendance Approval Workflow"):
 		return
+
+	if not frappe.db.exists("Role", "Branch Manager"):
+		frappe.get_doc({"doctype": "Role", "role_name": "Branch Manager"}).insert(
+			ignore_permissions=True
+		)
 
 	workflow = frappe.get_doc(
 		{

@@ -24,10 +24,6 @@ fixtures = [
             ]
         ],
     },
-    {
-        "dt": "Workflow",
-        "filters": [["name", "=", "Branch Attendance Approval Workflow"]],
-    },
 ]
 
 # Each item in the list will be shown as an app in the apps page
