@@ -31,12 +31,13 @@ def ensure_workflow_state(state_name):
 
 
 def ensure_workflow_action(action_name):
-	if frappe.db.exists("Workflow Action", action_name):
+	"""Workflow Transition.action links to Workflow Action Master in Frappe v16."""
+	if frappe.db.exists("Workflow Action Master", action_name):
 		return
 
 	frappe.get_doc(
 		{
-			"doctype": "Workflow Action",
+			"doctype": "Workflow Action Master",
 			"workflow_action_name": action_name,
 		}
 	).insert(ignore_permissions=True)
