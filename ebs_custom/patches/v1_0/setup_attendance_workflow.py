@@ -1,23 +1,76 @@
 import frappe
 
+WORKFLOW_NAME = "Branch Attendance Approval Workflow"
+DOCUMENT_TYPE = "Branch Attendance Approval"
+
+WORKFLOW_STATES = [
+	"Draft",
+	"Pending Approval",
+	"Approved",
+	"Rejected",
+]
+
+WORKFLOW_ACTIONS = [
+	"Submit for Approval",
+	"Approve",
+	"Reject",
+	"Reset to Draft",
+]
+
+
+def ensure_workflow_state(state_name):
+	if frappe.db.exists("Workflow State", state_name):
+		return
+
+	frappe.get_doc(
+		{
+			"doctype": "Workflow State",
+			"workflow_state_name": state_name,
+		}
+	).insert(ignore_permissions=True)
+
+
+def ensure_workflow_action(action_name):
+	if frappe.db.exists("Workflow Action", action_name):
+		return
+
+	frappe.get_doc(
+		{
+			"doctype": "Workflow Action",
+			"workflow_action_name": action_name,
+		}
+	).insert(ignore_permissions=True)
+
+
+def ensure_branch_manager_role():
+	if frappe.db.exists("Role", "Branch Manager"):
+		return
+
+	frappe.get_doc({"doctype": "Role", "role_name": "Branch Manager"}).insert(
+		ignore_permissions=True
+	)
+
 
 def execute():
-	if not frappe.db.exists("DocType", "Branch Attendance Approval"):
+	if not frappe.db.exists("DocType", DOCUMENT_TYPE):
 		return
 
-	if frappe.db.exists("Workflow", "Branch Attendance Approval Workflow"):
+	if frappe.db.exists("Workflow", WORKFLOW_NAME):
 		return
 
-	if not frappe.db.exists("Role", "Branch Manager"):
-		frappe.get_doc({"doctype": "Role", "role_name": "Branch Manager"}).insert(
-			ignore_permissions=True
-		)
+	ensure_branch_manager_role()
+
+	for state in WORKFLOW_STATES:
+		ensure_workflow_state(state)
+
+	for action in WORKFLOW_ACTIONS:
+		ensure_workflow_action(action)
 
 	workflow = frappe.get_doc(
 		{
 			"doctype": "Workflow",
-			"workflow_name": "Branch Attendance Approval Workflow",
-			"document_type": "Branch Attendance Approval",
+			"workflow_name": WORKFLOW_NAME,
+			"document_type": DOCUMENT_TYPE,
 			"is_active": 1,
 			"override_status": 0,
 			"send_email_alert": 1,

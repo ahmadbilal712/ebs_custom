@@ -117,6 +117,8 @@ On staff **Employee** → **Reports To** = Branch Manager employee.
 2. Open **Branch Attendance Approval Workflow**
 3. **Is Active** = checked
 
+If migrate failed with `LinkValidationError` on Workflow State, pull latest code and run migrate again (workflow setup now creates states/actions first).
+
 If missing, run migrate again (workflow is created automatically):
 
 ```bash
