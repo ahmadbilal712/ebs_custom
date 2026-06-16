@@ -20,6 +20,7 @@ fixtures = [
                 [
                     "Employee-custom_branch",
                     "Employee Checkin-approval_status",
+                    "Employee-custom_current_salary",
                 ],
             ]
         ],
@@ -61,6 +62,8 @@ fixtures = [
 # include js in doctype views
 doctype_js = {
 	"Branch Attendance Approval": "ebs_custom/doctype/branch_attendance_approval/branch_attendance_approval.js",
+	"Salary Adjustment Request": "ebs_custom/doctype/salary_adjustment_request/salary_adjustment_request.js",
+	"Promotion Request": "ebs_custom/doctype/promotion_request/promotion_request.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -175,28 +178,22 @@ doc_events = {
     "Branch Attendance Approval": {
         "on_update": "ebs_custom.attendance.events.attendance.on_branch_approval_update",
     },
+    "Salary Adjustment Request": {
+        "on_update": "ebs_custom.hr_requests.events.salary_promotion.on_hr_request_update",
+    },
+    "Promotion Request": {
+        "on_update": "ebs_custom.hr_requests.events.salary_promotion.on_hr_request_update",
+    },
 }
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"ebs_custom.tasks.all"
-# 	],
-# 	"daily": [
-# 		"ebs_custom.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"ebs_custom.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"ebs_custom.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"ebs_custom.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"ebs_custom.hr_requests.events.salary_promotion.apply_scheduled_hr_updates",
+	],
+}
 
 # Testing
 # -------

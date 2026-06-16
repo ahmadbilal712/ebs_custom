@@ -69,5 +69,15 @@
   "default": "Pending",
   "module": "Ebs Custom",
   "name": "Employee Checkin-approval_status"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Employee",
+  "fieldname": "custom_current_salary",
+  "fieldtype": "Currency",
+  "insert_after": "custom_branch",
+  "label": "Current Salary",
+  "module": "Ebs Custom",
+  "name": "Employee-custom_current_salary"
  }
 ]
