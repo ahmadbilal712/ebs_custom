@@ -1,6 +1,6 @@
 # HRMS PWA Overlay (managed by ebs_custom)
 
-Stored here — applied automatically on `bench migrate`.
+Stored here — applied automatically on `bench install-app ebs_custom` and `bench migrate`.
 
 ## What is copied (safe files only)
 
@@ -11,7 +11,9 @@ Stored here — applied automatically on `bench migrate`.
 
 Branding (BOT HR title) is patched into existing hrms files — core files are NOT replaced.
 
-## After migrate — rebuild required
+Router + Home.vue are patched idempotently (safe to run multiple times; duplicate imports are removed).
+
+## After migrate — rebuild if needed
 
 ```bash
 cd apps/hrms/frontend
@@ -22,18 +24,23 @@ bench build --app hrms
 bench restart
 ```
 
-## White screen fix
+## Build error: `ebsCustomRoutes has already been declared`
 
-If `/hrms` is blank after migrate:
+On server, edit `apps/hrms/frontend/src/router/index.js` — keep only ONE line:
 
-```bash
-cd ~/frappe-bench/apps/hrms/frontend   # or your bench path
-yarn install
-yarn build
-cd ~/frappe-bench
-bench build --app hrms
-bench --site biometric.metadaftr.com clear-cache
-bench restart
+```javascript
+import ebsCustomRoutes from "./ebs_custom"
 ```
 
-Then hard-refresh browser (`Ctrl+Shift+R`) or clear site data.
+Then `yarn build` and `bench build --app hrms`.
+
+Or pull latest `ebs_custom` and run `bench migrate` (patch auto-fixes duplicates).
+
+## White screen at /hrms
+
+```bash
+cd apps/hrms/frontend && yarn install && yarn build
+cd ~/frappe-bench && bench build --app hrms && bench restart
+```
+
+Hard refresh browser: `Ctrl+Shift+R`

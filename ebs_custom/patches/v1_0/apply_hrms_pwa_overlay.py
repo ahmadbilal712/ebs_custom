@@ -138,21 +138,30 @@ def _patch_router_index(hrms_root):
 	with open(path, encoding="utf-8") as handle:
 		content = handle.read()
 
-	if "ebs_custom.js" not in content:
-		if 'import salarySlipRoutes from "./salary_slips"' in content:
-			content = content.replace(
-				'import salarySlipRoutes from "./salary_slips"',
-				'import salarySlipRoutes from "./salary_slips"\nimport ebsCustomRoutes from "./ebs_custom"',
-			)
-		elif 'import salarySlipRoutes from "./salary_slips"\n' in content:
+	import_line = 'import ebsCustomRoutes from "./ebs_custom"'
+	spread_line = "\t...ebsCustomRoutes,"
+
+	# Remove duplicate imports / spreads from earlier buggy patch runs
+	while content.count(import_line) > 1:
+		content = content.replace(import_line + "\n", "", 1)
+
+	content = re.sub(r"(\t\.\.\.ebsCustomRoutes,\n)+", spread_line + "\n", content)
+
+	if import_line not in content:
+		if 'import salarySlipRoutes from "./salary_slips"\n' in content:
 			content = content.replace(
 				'import salarySlipRoutes from "./salary_slips"\n',
-				'import salarySlipRoutes from "./salary_slips"\nimport ebsCustomRoutes from "./ebs_custom"\n',
+				'import salarySlipRoutes from "./salary_slips"\n' + import_line + "\n",
+			)
+		elif 'import salarySlipRoutes from "./salary_slips"' in content:
+			content = content.replace(
+				'import salarySlipRoutes from "./salary_slips"',
+				'import salarySlipRoutes from "./salary_slips"\n' + import_line,
 			)
 
-	if "ebsCustomRoutes" not in content and "ebs_custom.js" in content:
+	if spread_line not in content:
 		for pattern, replacement in [
-			("\t...salarySlipRoutes,\n]", "\t...salarySlipRoutes,\n\t...ebsCustomRoutes,\n]"),
+			("\t...salarySlipRoutes,\n]", "\t...salarySlipRoutes,\n" + spread_line + "\n]"),
 			("...salarySlipRoutes,\n]", "...salarySlipRoutes,\n\t...ebsCustomRoutes,\n]"),
 		]:
 			if pattern.split("\n")[0] in content:
