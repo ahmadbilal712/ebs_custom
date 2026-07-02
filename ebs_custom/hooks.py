@@ -12,18 +12,35 @@ app_license = "mit"
 
 fixtures = [
     {
-        "dt": "Custom Field",
-        "filters": [
+        "dt": "Custom Field", "filters": [
             [
-                "name",
-                "in",
-                [
+                "name", "in", [
                     "Employee-custom_branch",
                     "Employee Checkin-approval_status",
                     "Employee-custom_current_salary",
-                ],
+                ]
             ]
         ],
+        "dt": "Print Format", "filters": [
+            [
+                "name", "in", [
+                    "Salary Statement Request Fromat",
+                ]
+            ]
+        ],
+        "dt": "Workflow", "filters": [
+            [
+                "name", "in", [
+                    "Offboarding Interview Workflow",
+                    "Resignation Request Workflow",
+                    "Salary Statement Request Workflow",
+                    "Shift Transfer Request Workflow",
+                    "Branch Transfer Request Workflow",
+                    "Loan Approval Multi Level",
+                    "Leave Approval Multi Level"
+                ]
+            ]
+        ],   
     },
 ]
 
@@ -60,6 +77,7 @@ fixtures = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
+# doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_js = {
 	"Branch Attendance Approval": "ebs_custom/doctype/branch_attendance_approval/branch_attendance_approval.js",
 	"Salary Adjustment Request": "ebs_custom/doctype/salary_adjustment_request/salary_adjustment_request.js",
@@ -108,9 +126,9 @@ doctype_js = {
 
 # before_install = "ebs_custom.install.before_install"
 # after_install = "ebs_custom.install.after_install"
-after_install = "ebs_custom.customizations.fields_setup.execute"
-after_migrate = "ebs_custom.setup.after_migrate"
 before_uninstall = "ebs_custom.customizations.fields_setup.remove_custom_fields"
+after_install = "ebs_custom.install.after_install"
+after_migrate = "ebs_custom.setup.after_migrate"
 # Uninstallation
 # ------------
 
@@ -166,11 +184,11 @@ before_uninstall = "ebs_custom.customizations.fields_setup.remove_custom_fields"
 doc_events = {
     "GL Entry": {
         "before_insert": "ebs_custom.overrides.branch_logic.set_branch_in_gl",
-        "before_save": "ebs_custom.overrides.branch_logic.set_branch_in_gl",
+        "before_save": "ebs_custom.overrides.branch_logic.set_branch_in_gl"
     },
     "Stock Ledger Entry": {
         "before_insert": "ebs_custom.overrides.branch_logic.set_branch_in_sle",
-        "before_save": "ebs_custom.overrides.branch_logic.set_branch_in_gl",
+        "before_save": "ebs_custom.overrides.branch_logic.set_branch_in_gl"
     },
     "Employee Checkin": {
         "validate": "ebs_custom.attendance.events.attendance.validate_checkin",
@@ -194,6 +212,24 @@ scheduler_events = {
 		"ebs_custom.hr_requests.events.salary_promotion.apply_scheduled_hr_updates",
 	],
 }
+
+# scheduler_events = {
+# 	"all": [
+# 		"ebs_custom.tasks.all"
+# 	],
+# 	"daily": [
+# 		"ebs_custom.tasks.daily"
+# 	],
+# 	"hourly": [
+# 		"ebs_custom.tasks.hourly"
+# 	],
+# 	"weekly": [
+# 		"ebs_custom.tasks.weekly"
+# 	],
+# 	"monthly": [
+# 		"ebs_custom.tasks.monthly"
+# 	],
+# }
 
 # Testing
 # -------
@@ -264,6 +300,19 @@ scheduler_events = {
 # 		"doctype": "{doctype_4}"
 # 	}
 # ]
+
+
+permission_query_conditions = {
+	"Employee Complaint": "ebs_custom.hr_complaints.permissions.get_permission_query_conditions",
+	"Resignation Request": "ebs_custom.employee_exit.permissions.get_resignation_query_conditions",
+	"Offboarding Interview": "ebs_custom.employee_exit.permissions.get_offboarding_query_conditions",
+}
+
+has_permission = {
+	"Employee Complaint": "ebs_custom.hr_complaints.permissions.has_permission",
+	"Resignation Request": "ebs_custom.employee_exit.permissions.has_resignation_permission",
+	"Offboarding Interview": "ebs_custom.employee_exit.permissions.has_offboarding_permission",
+}
 
 # Authentication and authorization
 # --------------------------------

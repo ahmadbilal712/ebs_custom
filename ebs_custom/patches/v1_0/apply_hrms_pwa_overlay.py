@@ -1,11 +1,9 @@
 import os
 import re
 import shutil
+import subprocess
 
 import frappe
-
-
-OVERLAY_MARKER = "ebs_custom PWA overlay"
 
 
 def execute():
@@ -16,11 +14,12 @@ def apply_hrms_pwa_overlay():
 	"""Copy HRMS PWA customizations from ebs_custom into the hrms app."""
 	if "hrms" not in frappe.get_installed_apps():
 		frappe.logger().info("ebs_custom: hrms not installed, skipping PWA overlay")
-		return
+		return False
 
 	overlay_root = os.path.join(frappe.get_app_path("ebs_custom"), "hrms_overlay")
 	if not os.path.isdir(overlay_root):
-		return
+		frappe.logger().warning("ebs_custom: hrms_overlay folder missing")
+		return False
 
 	hrms_root = frappe.get_app_path("hrms", "..")
 
@@ -29,9 +28,59 @@ def apply_hrms_pwa_overlay():
 	_patch_home_vue(hrms_root)
 	_patch_hooks(hrms_root)
 
-	frappe.logger().info(
-		"ebs_custom: HRMS PWA overlay applied. Run: cd apps/hrms/frontend && yarn build && bench build --app hrms"
-	)
+	frappe.logger().info("ebs_custom: HRMS PWA overlay applied from ebs_custom/hrms_overlay")
+	return True
+
+
+def build_hrms_pwa():
+	"""Try to build HRMS frontend after overlay. Returns True on success."""
+	hrms_root = frappe.get_app_path("hrms", "..")
+	frontend_dir = os.path.join(hrms_root, "frontend")
+	bench_path = frappe.utils.get_bench_path()
+
+	if not os.path.isdir(frontend_dir):
+		return False
+
+	yarn = shutil.which("yarn")
+	if not yarn:
+		frappe.logger().warning("ebs_custom: yarn not found — skip auto PWA build")
+		return False
+
+	try:
+		if os.path.isfile(os.path.join(frontend_dir, "package.json")):
+			subprocess.run(
+				[yarn, "install", "--frozen-lockfile"],
+				cwd=frontend_dir,
+				check=True,
+				capture_output=True,
+				text=True,
+				timeout=600,
+			)
+			subprocess.run(
+				[yarn, "build"],
+				cwd=frontend_dir,
+				check=True,
+				capture_output=True,
+				text=True,
+				timeout=900,
+			)
+
+		bench_cmd = os.path.join(bench_path, "env", "bin", "bench")
+		if not os.path.isfile(bench_cmd):
+			bench_cmd = shutil.which("bench") or "bench"
+
+		subprocess.run(
+			[bench_cmd, "build", "--app", "hrms"],
+			cwd=bench_path,
+			check=True,
+			capture_output=True,
+			text=True,
+			timeout=600,
+		)
+		return True
+	except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+		frappe.logger().warning(f"ebs_custom: auto PWA build failed: {exc}")
+		return False
 
 
 def _copy_overlay_files(overlay_root, hrms_root):
