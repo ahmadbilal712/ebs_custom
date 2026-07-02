@@ -5,6 +5,14 @@ import subprocess
 
 import frappe
 
+# Only copy these paths from hrms_overlay (safe — won't break core hrms)
+OVERLAY_COPY_PATHS = [
+	"frontend/src/views/ebs_custom",
+	"frontend/src/router/ebs_custom.js",
+	"frontend/src/components/icons/FrappeHRLogo.vue",
+	"hrms/public/manifest",
+]
+
 
 def execute():
 	apply_hrms_pwa_overlay()
@@ -27,6 +35,8 @@ def apply_hrms_pwa_overlay():
 	_patch_router_index(hrms_root)
 	_patch_home_vue(hrms_root)
 	_patch_hooks(hrms_root)
+	_patch_branding_files(hrms_root)
+	_patch_vite_manifest(hrms_root)
 
 	frappe.logger().info("ebs_custom: HRMS PWA overlay applied from ebs_custom/hrms_overlay")
 	return True
@@ -46,24 +56,45 @@ def build_hrms_pwa():
 		frappe.logger().warning("ebs_custom: yarn not found — skip auto PWA build")
 		return False
 
-	try:
-		if os.path.isfile(os.path.join(frontend_dir, "package.json")):
-			subprocess.run(
-				[yarn, "install", "--frozen-lockfile"],
+	install_cmds = [
+		[yarn, "install", "--frozen-lockfile"],
+		[yarn, "install"],
+	]
+
+	for install_cmd in install_cmds:
+		try:
+			result = subprocess.run(
+				install_cmd,
 				cwd=frontend_dir,
-				check=True,
 				capture_output=True,
 				text=True,
 				timeout=600,
 			)
-			subprocess.run(
-				[yarn, "build"],
-				cwd=frontend_dir,
-				check=True,
-				capture_output=True,
-				text=True,
-				timeout=900,
+			if result.returncode == 0:
+				break
+			frappe.logger().warning(
+				f"ebs_custom: yarn install failed ({' '.join(install_cmd)}): {result.stderr[-2000:]}"
 			)
+		except (subprocess.TimeoutExpired, OSError) as exc:
+			frappe.logger().warning(f"ebs_custom: yarn install error: {exc}")
+			return False
+	else:
+		return False
+
+	try:
+		result = subprocess.run(
+			[yarn, "build"],
+			cwd=frontend_dir,
+			capture_output=True,
+			text=True,
+			timeout=900,
+		)
+		if result.returncode != 0:
+			frappe.log_error(
+				title="ebs_custom PWA build failed",
+				message=result.stderr or result.stdout or "Unknown yarn build error",
+			)
+			return False
 
 		bench_cmd = os.path.join(bench_path, "env", "bin", "bench")
 		if not os.path.isfile(bench_cmd):
@@ -79,24 +110,22 @@ def build_hrms_pwa():
 		)
 		return True
 	except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
-		frappe.logger().warning(f"ebs_custom: auto PWA build failed: {exc}")
+		frappe.log_error(title="ebs_custom PWA build failed", message=str(exc))
 		return False
 
 
 def _copy_overlay_files(overlay_root, hrms_root):
-	skip_names = {"apply_hrms_pwa_overlay.py", "README.md"}
+	for rel_path in OVERLAY_COPY_PATHS:
+		src = os.path.join(overlay_root, rel_path.replace("/", os.sep))
+		if not os.path.exists(src):
+			continue
 
-	for root, _dirs, files in os.walk(overlay_root):
-		for filename in files:
-			if filename in skip_names:
-				continue
-
-			src = os.path.join(root, filename)
-			rel = os.path.relpath(src, overlay_root)
-			if rel.startswith("merge_patches" + os.sep):
-				continue
-
-			dst = os.path.join(hrms_root, rel.replace("/", os.sep))
+		dst = os.path.join(hrms_root, rel_path.replace("/", os.sep))
+		if os.path.isdir(src):
+			if os.path.isdir(dst):
+				shutil.rmtree(dst)
+			shutil.copytree(src, dst)
+		else:
 			os.makedirs(os.path.dirname(dst), exist_ok=True)
 			shutil.copy2(src, dst)
 
@@ -109,17 +138,26 @@ def _patch_router_index(hrms_root):
 	with open(path, encoding="utf-8") as handle:
 		content = handle.read()
 
-	if "ebs_custom.js" in content:
-		return
+	if "ebs_custom.js" not in content:
+		if 'import salarySlipRoutes from "./salary_slips"' in content:
+			content = content.replace(
+				'import salarySlipRoutes from "./salary_slips"',
+				'import salarySlipRoutes from "./salary_slips"\nimport ebsCustomRoutes from "./ebs_custom"',
+			)
+		elif 'import salarySlipRoutes from "./salary_slips"\n' in content:
+			content = content.replace(
+				'import salarySlipRoutes from "./salary_slips"\n',
+				'import salarySlipRoutes from "./salary_slips"\nimport ebsCustomRoutes from "./ebs_custom"\n',
+			)
 
-	content = content.replace(
-		'import salarySlipRoutes from "./salary_slips"\n',
-		'import salarySlipRoutes from "./salary_slips"\nimport ebsCustomRoutes from "./ebs_custom"\n',
-	)
-	content = content.replace(
-		"\t...salarySlipRoutes,\n]",
-		"\t...salarySlipRoutes,\n\t...ebsCustomRoutes,\n]",
-	)
+	if "ebsCustomRoutes" not in content and "ebs_custom.js" in content:
+		for pattern, replacement in [
+			("\t...salarySlipRoutes,\n]", "\t...salarySlipRoutes,\n\t...ebsCustomRoutes,\n]"),
+			("...salarySlipRoutes,\n]", "...salarySlipRoutes,\n\t...ebsCustomRoutes,\n]"),
+		]:
+			if pattern.split("\n")[0] in content:
+				content = content.replace(pattern, replacement)
+				break
 
 	with open(path, "w", encoding="utf-8") as handle:
 		handle.write(content)
@@ -154,10 +192,13 @@ def _patch_home_vue(hrms_root):
 	},
 ]"""
 
-	content = content.replace(
+	for pattern in [
 		'\t\troute: "SalarySlipsDashboard",\n\t},\n]',
-		'\t\troute: "SalarySlipsDashboard",\n\t},' + quick_links,
-	)
+		'\t\troute: "SalarySlipsDashboard",\n\t},\r\n]',
+	]:
+		if pattern in content:
+			content = content.replace(pattern, '\t\troute: "SalarySlipsDashboard",\n\t},' + quick_links)
+			break
 
 	with open(path, "w", encoding="utf-8") as handle:
 		handle.write(content)
@@ -172,11 +213,56 @@ def _patch_hooks(hrms_root):
 		content = handle.read()
 
 	content = re.sub(r'app_title\s*=\s*"[^"]*"', 'app_title = "BOT HR"', content)
-	content = re.sub(
-		r'("title":\s*)"Frappe HR"',
-		r'\1"BOT HR"',
-		content,
-	)
+	content = re.sub(r'("title":\s*)"Frappe HR"', r'\1"BOT HR"', content)
+
+	with open(path, "w", encoding="utf-8") as handle:
+		handle.write(content)
+
+
+def _patch_branding_files(hrms_root):
+	replacements = {
+		os.path.join(hrms_root, "frontend", "src", "views", "Login.vue"): [
+			("Login to Frappe HR", "Login to BOT HR"),
+		],
+		os.path.join(hrms_root, "frontend", "src", "components", "BaseLayout.vue"): [
+			('__("Frappe HR")', '__("BOT HR")'),
+		],
+		os.path.join(hrms_root, "frontend", "src", "components", "InstallPrompt.vue"): [
+			("Install Frappe HR", "Install BOT HR"),
+		],
+	}
+
+	for path, pairs in replacements.items():
+		if not os.path.isfile(path):
+			continue
+		with open(path, encoding="utf-8") as handle:
+			content = handle.read()
+		for old, new in pairs:
+			content = content.replace(old, new)
+		with open(path, "w", encoding="utf-8") as handle:
+			handle.write(content)
+
+
+def _patch_vite_manifest(hrms_root):
+	path = os.path.join(hrms_root, "frontend", "vite.config.js")
+	if not os.path.isfile(path):
+		return
+
+	with open(path, encoding="utf-8") as handle:
+		content = handle.read()
+
+	content = re.sub(r'name:\s*"Frappe HR"', 'name: "BOT HR"', content)
+	content = re.sub(r'short_name:\s*"Frappe HR"', 'short_name: "BOT HR"', content)
+
+	if "bot-hr-icon-192.png" not in content:
+		content = content.replace(
+			"/assets/hrms/manifest/manifest-icon-192.maskable.png",
+			"/assets/hrms/manifest/bot-hr-icon-192.png",
+		)
+		content = content.replace(
+			"/assets/hrms/manifest/manifest-icon-512.maskable.png",
+			"/assets/hrms/manifest/bot-hr-icon-512.png",
+		)
 
 	with open(path, "w", encoding="utf-8") as handle:
 		handle.write(content)

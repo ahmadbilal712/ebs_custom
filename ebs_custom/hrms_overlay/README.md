@@ -1,31 +1,39 @@
 # HRMS PWA Overlay (managed by ebs_custom)
 
-These files are copied into the `hrms` app automatically when you run:
+Stored here — applied automatically on `bench migrate`.
 
-```bash
-bench --site YOUR_SITE migrate
-```
+## What is copied (safe files only)
 
-or when `ebs_custom` `after_migrate` runs.
+- `frontend/src/views/ebs_custom/` — PWA form screens
+- `frontend/src/router/ebs_custom.js` — routes
+- `frontend/src/components/icons/FrappeHRLogo.vue` — logo
+- `hrms/public/manifest/bot-hr-*` — PWA icons
 
-## After migrate — rebuild PWA (required)
+Branding (BOT HR title) is patched into existing hrms files — core files are NOT replaced.
+
+## After migrate — rebuild required
 
 ```bash
 cd apps/hrms/frontend
+yarn install
 yarn build
 cd ../../..
 bench build --app hrms
 bench restart
 ```
 
-## What this folder contains
+## White screen fix
 
-- BOT HR branding (login, manifest, logo)
-- PWA routes for Salary Adjustment, Promotion Request, Branch Attendance Approval
-- Branch Attendance Approval screen with **Load Check-ins** button
+If `/hrms` is blank after migrate:
 
-## When HRMS is updated
+```bash
+cd ~/frappe-bench/apps/hrms/frontend   # or your bench path
+yarn install
+yarn build
+cd ~/frappe-bench
+bench build --app hrms
+bench --site biometric.metadaftr.com clear-cache
+bench restart
+```
 
-`bench update` may change core `hrms` files. Running `bench migrate` re-applies this overlay.
-
-If `Home.vue` or `router/index.js` were heavily changed upstream, tell your developer to re-merge those two files manually.
+Then hard-refresh browser (`Ctrl+Shift+R`) or clear site data.

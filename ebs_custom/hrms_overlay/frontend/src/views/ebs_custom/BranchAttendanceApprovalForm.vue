@@ -33,7 +33,7 @@
 <script setup>
 import { IonPage, IonContent } from "@ionic/vue"
 import { Button, createResource, toast } from "frappe-ui"
-import { ref, inject, watch } from "vue"
+import { ref, inject } from "vue"
 
 import FormView from "@/components/FormView.vue"
 
@@ -126,6 +126,6 @@ function handleLoadCheckins() {
 		})
 		return
 	}
-	loadCheckins.fetch()
+	loadCheckins.reload()
 }
 </script>
