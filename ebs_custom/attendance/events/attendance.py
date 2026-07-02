@@ -58,6 +58,20 @@ def on_branch_approval_update(doc, method=None):
 
 
 @frappe.whitelist()
+def get_branch_manager_defaults():
+	"""Return branch/company defaults for the logged-in branch manager (PWA)."""
+	return (
+		frappe.db.get_value(
+			"Employee",
+			{"user_id": frappe.session.user, "status": "Active"},
+			["custom_branch", "company"],
+			as_dict=True,
+		)
+		or {}
+	)
+
+
+@frappe.whitelist()
 def load_branch_checkins(branch, attendance_date):
 	"""Load all branch employees with check-in/out and status for the day."""
 	attendance_date = getdate(attendance_date)
