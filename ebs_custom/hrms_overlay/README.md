@@ -13,6 +13,8 @@ Branding (BOT HR title) is patched into existing hrms files — core files are N
 
 Router + Home.vue are patched idempotently (safe to run multiple times; duplicate imports are removed).
 
+PWA manifest uses **BOT HR icons only if PNG files exist** on server; otherwise default HRMS icons are kept so **Install app** still works.
+
 ## After migrate — rebuild if needed
 
 ```bash

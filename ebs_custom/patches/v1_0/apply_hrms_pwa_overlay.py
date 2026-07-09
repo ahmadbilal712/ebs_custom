@@ -252,6 +252,12 @@ def _patch_branding_files(hrms_root):
 			handle.write(content)
 
 
+def _bot_hr_icons_available(hrms_root):
+	manifest_dir = os.path.join(hrms_root, "hrms", "public", "manifest")
+	required = ["bot-hr-icon-192.png", "bot-hr-icon-512.png"]
+	return all(os.path.isfile(os.path.join(manifest_dir, name)) for name in required)
+
+
 def _patch_vite_manifest(hrms_root):
 	path = os.path.join(hrms_root, "frontend", "vite.config.js")
 	if not os.path.isfile(path):
@@ -260,17 +266,34 @@ def _patch_vite_manifest(hrms_root):
 	with open(path, encoding="utf-8") as handle:
 		content = handle.read()
 
-	content = re.sub(r'name:\s*"Frappe HR"', 'name: "BOT HR"', content)
-	content = re.sub(r'short_name:\s*"Frappe HR"', 'short_name: "BOT HR"', content)
+	content = re.sub(r'name:\s*"[^"]*"', 'name: "BOT HR"', content, count=1)
+	content = re.sub(r'short_name:\s*"[^"]*"', 'short_name: "BOT HR"', content, count=1)
 
-	if "bot-hr-icon-192.png" not in content:
-		content = content.replace(
-			"/assets/hrms/manifest/manifest-icon-192.maskable.png",
-			"/assets/hrms/manifest/bot-hr-icon-192.png",
+	if 'description: "BOT HR' not in content and "description:" in content:
+		content = re.sub(
+			r'description:\s*"[^"]*"',
+			'description: "BOT HR — Elite Business Company HR & Payroll"',
+			content,
+			count=1,
 		)
-		content = content.replace(
-			"/assets/hrms/manifest/manifest-icon-512.maskable.png",
-			"/assets/hrms/manifest/bot-hr-icon-512.png",
+
+	if "scope:" not in content and "start_url:" in content:
+		content = content.replace('start_url: "/hrms",', 'start_url: "/hrms",\n\t\t\t\tscope: "/hrms",')
+
+	frappe_icon_192 = "/assets/hrms/manifest/manifest-icon-192.maskable.png"
+	frappe_icon_512 = "/assets/hrms/manifest/manifest-icon-512.maskable.png"
+	bot_icon_192 = "/assets/hrms/manifest/bot-hr-icon-192.png"
+	bot_icon_512 = "/assets/hrms/manifest/bot-hr-icon-512.png"
+
+	if _bot_hr_icons_available(hrms_root):
+		content = content.replace(frappe_icon_192, bot_icon_192)
+		content = content.replace(frappe_icon_512, bot_icon_512)
+	else:
+		# Keep default HRMS icons so Chrome still shows Install / Download app
+		content = content.replace(bot_icon_192, frappe_icon_192)
+		content = content.replace(bot_icon_512, frappe_icon_512)
+		frappe.logger().warning(
+			"ebs_custom: BOT HR icons missing — using default HRMS PWA icons for install prompt"
 		)
 
 	with open(path, "w", encoding="utf-8") as handle:
