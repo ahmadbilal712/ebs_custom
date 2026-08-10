@@ -10,6 +10,12 @@ OVERLAY_COPY_PATHS = [
 	"frontend/src/views/ebs_custom",
 	"frontend/src/router/ebs_custom.js",
 	"frontend/src/components/icons/FrappeHRLogo.vue",
+	"frontend/src/components/RequestPanel.vue",
+	"frontend/src/components/RequestList.vue",
+	"frontend/src/components/EmployeeAdvanceItem.vue",
+	"frontend/src/data/advances.js",
+	"frontend/src/data/config/requestSummaryFields.js",
+	"hrms/hr/doctype/pwa_notification/pwa_notification.py",
 	"hrms/public/manifest",
 ]
 

@@ -18,16 +18,22 @@ fixtures = [
                     "Employee-custom_branch",
                     "Employee Checkin-approval_status",
                     "Employee-custom_current_salary",
+                    "Item-custom_section_break_3ieq4",
+                    "Item-custom_item_domains"
                 ]
             ]
-        ],
+        ]
+    },
+    {
         "dt": "Print Format", "filters": [
             [
                 "name", "in", [
                     "Salary Statement Request Fromat",
                 ]
             ]
-        ],
+        ]
+    },
+    {
         "dt": "Workflow", "filters": [
             [
                 "name", "in", [
@@ -42,6 +48,19 @@ fixtures = [
             ]
         ],   
     },
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["doc_type", "=", "Item"],
+            # ["field_name", "=", "item_code"]
+        ]
+    },
+    {
+        "dt": "Client Script",
+        "filters": [
+            ["dt", "=", "Item"]
+        ]
+    }
 ]
 
 # Each item in the list will be shown as an app in the apps page
@@ -82,6 +101,7 @@ doctype_js = {
 	"Branch Attendance Approval": "ebs_custom/doctype/branch_attendance_approval/branch_attendance_approval.js",
 	"Salary Adjustment Request": "ebs_custom/doctype/salary_adjustment_request/salary_adjustment_request.js",
 	"Promotion Request": "ebs_custom/doctype/promotion_request/promotion_request.js",
+    "Employee User Generator": "ebs_custom/doctype/employee_user_generator/employee_user_generator.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -202,6 +222,12 @@ doc_events = {
     "Promotion Request": {
         "on_update": "ebs_custom.hr_requests.events.salary_promotion.on_hr_request_update",
     },
+    "Employee Advance": {
+        "on_update": "ebs_custom.hr_requests.events.employee_advance.on_employee_advance_update",
+    },
+    "Item": {
+        "autoname": "ebs_custom.utils.set_domain_item_code"
+    }
 }
 
 # Scheduled Tasks

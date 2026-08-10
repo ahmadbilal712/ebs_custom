@@ -7,13 +7,21 @@ Stored here — applied automatically on `bench install-app ebs_custom` and `ben
 - `frontend/src/views/ebs_custom/` — PWA form screens
 - `frontend/src/router/ebs_custom.js` — routes
 - `frontend/src/components/icons/FrappeHRLogo.vue` — logo
+- `frontend/src/components/RequestPanel.vue` — Home My/Team Requests (includes Employee Advance)
+- `frontend/src/components/RequestList.vue` — request action sheet field map
+- `frontend/src/components/EmployeeAdvanceItem.vue` — advance list item + workflow badges
+- `frontend/src/data/advances.js` — my/team advances (`for_approval`) via `ebs_custom.api.pwa`
+- `frontend/src/data/config/requestSummaryFields.js` — Employee Advance summary fields
+- `hrms/hr/doctype/pwa_notification/pwa_notification.py` — deep link for advances
 - `hrms/public/manifest/bot-hr-*` — PWA icons
 
 Branding (BOT HR title) is patched into existing hrms files — core files are NOT replaced.
 
 Router + Home.vue are patched idempotently (safe to run multiple times; duplicate imports are removed).
 
-PWA manifest uses **BOT HR icons only if PNG files exist** on server; otherwise default HRMS icons are kept so **Install app** still works.
+## Employee Advance / Loan on mobile
+
+Pending advances appear under **Home → Team Requests** for users whose roles can act on the current workflow state (Loan Approval Multi Level). Approvers also get **PWA Notification**s when the state moves to their stage.
 
 ## After migrate — rebuild if needed
 

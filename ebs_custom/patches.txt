@@ -8,3 +8,4 @@ ebs_custom.patches.v1_0.setup_attendance_approval
 ebs_custom.patches.v1_0.setup_attendance_workflow
 ebs_custom.patches.v1_0.setup_hr_request_workflows
 ebs_custom.patches.v1_0.apply_hrms_pwa_overlay
+ebs_custom.patches.v1_0.share_pending_employee_advances
